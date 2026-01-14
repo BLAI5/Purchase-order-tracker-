@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Manager | Local Customs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-progress { background-color: #dbeafe; color: #1e40af; }
+        .status-finished { background-color: #d1fae5; color: #065f46; }
+        .pay-unpaid { background-color: #fee2e2; color: #991b1b; }
+        .pay-deposit { background-color: #fef3c7; color: #92400e; }
+        .pay-full { background-color: #d1fae5; color: #065f46; }
+        /* Larger touch targets for knuckle comfort */
+        input, select, button, textarea { font-size: 16px !important; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-20">
+
+<div id="app" class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Order Manager</h1>
+            <p class="text-slate-500">Track customs, deposits, & balances.</p>
+        </div>
+        <button onclick="toggleModal(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
+            <i data-lucide="plus" class="w-6 h-6"></i> New Order
+        </button>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">In Hand ($)</p>
+            <p id="stat-revenue" class="text-2xl font-bold text-emerald-600">$0</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Outstanding ($)</p>
+            <p id="stat-pending-cash" class="text-2xl font-bold text-rose-500">$0</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Active Orders</p>
+            <p id="stat-active" class="text-2xl font-bold text-slate-800">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Items Total</p>
+            <p id="stat-items" class="text-2xl font-bold text-slate-800">0</p>
+        </div>
+    </div>
+
+    <!-- Search/Filter -->
+    <div class="flex flex-col md:flex-row gap-3 mb-6">
+        <div class="relative flex-1">
+            <i data-lucide="search" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="searchInput" placeholder="Search customer name..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <select id="filterStatus" class="bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium outline-none">
+            <option value="all">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Finished">Finished</option>
+        </select>
+    </div>
+
+    <!-- Orders List -->
+    <div id="ordersList" class="space-y-4">
+        <div class="flex justify-center py-20">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="orderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl my-auto">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <h2 id="modalTitle" class="text-xl font-bold text-slate-800">Create Order</h2>
+            <button onclick="toggleModal(false)" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="x"></i></button>
+        </div>
+        <form id="orderForm" class="p-6 space-y-4">
+            <input type="hidden" id="orderId">
+            <input type="text" id="customerName" required placeholder="Customer Name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <select id="itemType" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <option value="Shirt">Shirt</option>
+                    <option value="Sweater">Sweater</option>
+                    <option value="Crew Neck">Crew Neck</option>
+                    <option value="Sticker">Sticker Set</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="number" id="quantity" value="1" min="1" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <input type="number" id="price" step="0.01" placeholder="Total Price ($)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <input type="number" id="depositAmount" step="0.01" placeholder="Deposit Paid ($)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <select id="paymentStatus" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <option value="Unpaid">Unpaid</option>
+                    <option value="Deposit">Deposit Paid</option>
+                    <option value="Full">Fully Paid</option>
+                </select>
+                <select id="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Finished">Finished</option>
+                </select>
+            </div>
+
+            <textarea id="details" rows="2" placeholder="Design Notes (sizes, colors...)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none"></textarea>
+
+            <div class="pt-4 flex gap-3">
+                <button type="submit" class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95">Save Order</button>
+                <button type="button" onclick="toggleModal(false)" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+    // YOUR FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "AIzaSyAGuV3oqPzHKoB0-p9S7oFDpLYHL88c9OE",
+      authDomain: "order-tracker-91a03.firebaseapp.com",
+      projectId: "order-tracker-91a03",
+      storageBucket: "order-tracker-91a03.firebasestorage.app",
+      messagingSenderId: "386523526590",
+      appId: "1:386523526590:web:02d418b4a829735edc35ef",
+      measurementId: "G-448JDYKFKH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = "local-customs-manager"; // Unique identifier for your Firestore collection
+
+    let orders = [];
+    let user = null;
+
+    onAuthStateChanged(auth, u => {
+        if (!u) {
+            signInAnonymously(auth).catch(err => console.error("Anonymous Auth Failed", err));
+        } else {
+            user = u;
+            setupListener();
+        }
+    });
+
+    function setupListener() {
+        const colRef = collection(db, 'orders'); // Simpler path for personal Firebase
+        onSnapshot(colRef, snap => {
+            orders = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            render();
+        }, err => console.error("Firestore error", err));
+    }
+
+    window.toggleModal = (show, id = null) => {
+        const modal = document.getElementById('orderModal');
+        const form = document.getElementById('orderForm');
+        document.getElementById('orderId').value = id || '';
+        form.reset();
+        
+        if (id) {
+            const o = orders.find(x => x.id === id);
+            if (o) {
+                document.getElementById('customerName').value = o.customerName;
+                document.getElementById('itemType').value = o.itemType;
+                document.getElementById('quantity').value = o.quantity;
+                document.getElementById('price').value = o.price || 0;
+                document.getElementById('depositAmount').value = o.depositAmount || 0;
+                document.getElementById('details').value = o.details;
+                document.getElementById('status').value = o.status;
+                document.getElementById('paymentStatus').value = o.paymentStatus || 'Unpaid';
+            }
+        }
+        modal.style.display = show ? 'flex' : 'none';
+        lucide.createIcons();
+    };
+
+    document.getElementById('orderForm').onsubmit = async (e) => {
+        e.preventDefault();
+        if (!user) return;
+        const id = document.getElementById('orderId').value;
+        const payload = {
+            customerName: document.getElementById('customerName').value,
+            itemType: document.getElementById('itemType').value,
+            quantity: parseInt(document.getElementById('quantity').value),
+            price: parseFloat(document.getElementById('price').value) || 0,
+            depositAmount: parseFloat(document.getElementById('depositAmount').value) || 0,
+            paymentStatus: document.getElementById('paymentStatus').value,
+            details: document.getElementById('details').value,
+            status: document.getElementById('status').value,
+            updatedAt: Date.now()
+        };
+
+        try {
+            if (id) {
+                await updateDoc(doc(db, 'orders', id), payload);
+            } else {
+                payload.createdAt = Date.now();
+                await addDoc(collection(db, 'orders'), payload);
+            }
+            toggleModal(false);
+        } catch (err) { console.error("Save failed", err); }
+    };
+
+    window.markPaid = async (id) => {
+        await updateDoc(doc(db, 'orders', id), { paymentStatus: 'Full' });
+    };
+
+    window.quickStatus = async (id, next) => {
+        await updateDoc(doc(db, 'orders', id), { status: next });
+    };
+
+    window.deleteOrder = async (id) => {
+        if (confirm('Delete this order?')) {
+            await deleteDoc(doc(db, 'orders', id));
+        }
+    };
+
+    function render() {
+        const list = document.getElementById('ordersList');
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const filter = document.getElementById('filterStatus').value;
+
+        let inHand = 0, outstanding = 0, active = 0, items = 0;
+
+        orders.forEach(o => {
+            const p = o.price || 0, d = o.depositAmount || 0;
+            if (o.paymentStatus === 'Full') inHand += p;
+            else if (o.paymentStatus === 'Deposit') { inHand += d; outstanding += (p - d); }
+            else outstanding += p;
+
+            if (o.status !== 'Finished') active++;
+            items += (o.quantity || 0);
+        });
+
+        document.getElementById('stat-revenue').innerText = `$${inHand.toFixed(2)}`;
+        document.getElementById('stat-pending-cash').innerText = `$${outstanding.toFixed(2)}`;
+        document.getElementById('stat-active').innerText = active;
+        document.getElementById('stat-items').innerText = items;
+
+        const filtered = orders.filter(o => {
+            return o.customerName.toLowerCase().includes(search) && (filter === 'all' || o.status === filter);
+        }).sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+        if (filtered.length === 0) {
+            list.innerHTML = `<div class="bg-white p-12 text-center rounded-3xl text-slate-400 border-2 border-dashed border-slate-200">No orders found.</div>`;
+            return;
+        }
+
+        list.innerHTML = filtered.map(o => {
+            const p = o.price || 0, d = o.depositAmount || 0;
+            const rem = o.paymentStatus === 'Full' ? 0 : (o.paymentStatus === 'Deposit' ? p - d : p);
+            return `
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-slate-900 text-lg">${o.customerName}</h3>
+                            <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${getStatusColor(o.status)}">${o.status}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm">
+                            <span class="font-semibold text-indigo-600">${o.quantity}x ${o.itemType}</span>
+                            <span class="text-slate-300">•</span>
+                            <span class="px-2 py-0.5 rounded-md font-bold text-[11px] ${getPaymentClass(o.paymentStatus)}">${o.paymentStatus.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="toggleModal(true, '${o.id}')" class="p-2 text-slate-400 hover:text-indigo-600 rounded-xl"><i data-lucide="edit-2"></i></button>
+                        <button onclick="deleteOrder('${o.id}')" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl"><i data-lucide="trash-2"></i></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-slate-50 p-2 rounded-xl text-center">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Total</p>
+                        <p class="font-bold text-slate-700">$${p.toFixed(2)}</p>
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-xl text-center">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Balance</p>
+                        <p class="font-bold ${rem > 0 ? 'text-rose-600' : 'text-emerald-600'}">${rem > 0 ? `$${rem.toFixed(2)}` : 'PAID'}</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    ${o.paymentStatus !== 'Full' ? `<button onclick="markPaid('${o.id}')" class="flex-1 py-3 text-xs font-black bg-emerald-600 text-white rounded-xl shadow-md">COLLECT FULL</button>` : ''}
+                    ${o.status === 'Pending' ? `<button onclick="quickStatus('${o.id}', 'In Progress')" class="flex-1 py-3 text-xs font-black bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">START</button>` : o.status === 'In Progress' ? `<button onclick="quickStatus('${o.id}', 'Finished')" class="flex-1 py-3 text-xs font-black bg-amber-50 text-amber-700 rounded-xl border border-amber-100">FINISH</button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    function getStatusColor(s) { return s === 'Pending' ? 'status-pending' : s === 'In Progress' ? 'status-progress' : 'status-finished'; }
+    function getPaymentClass(p) { return p === 'Unpaid' ? 'pay-unpaid' : p === 'Deposit' ? 'pay-deposit' : 'pay-full'; }
+    document.getElementById('searchInput').oninput = render;
+    document.getElementById('filterStatus').onchange = render;
+</script>
+</body>
+</html>
