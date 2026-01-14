@@ -15,8 +15,17 @@
         .pay-unpaid { background-color: #fee2e2; color: #991b1b; }
         .pay-deposit { background-color: #fef3c7; color: #92400e; }
         .pay-full { background-color: #d1fae5; color: #065f46; }
-        /* Larger touch targets for knuckle comfort */
         input, select, button, textarea { font-size: 16px !important; }
+        
+        /* Loading spinner for button */
+        .spinner {
+            animation: rotate 2s linear infinite;
+            width: 18px;
+            height: 18px;
+        }
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-20">
@@ -83,6 +92,8 @@
             <button onclick="toggleModal(false)" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="x"></i></button>
         </div>
         <form id="orderForm" class="p-6 space-y-4">
+            <div id="formError" class="hidden p-3 bg-rose-50 text-rose-600 rounded-xl text-sm font-medium border border-rose-100"></div>
+            
             <input type="hidden" id="orderId">
             <input type="text" id="customerName" required placeholder="Customer Name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
             
@@ -118,7 +129,9 @@
             <textarea id="details" rows="2" placeholder="Design Notes (sizes, colors...)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none"></textarea>
 
             <div class="pt-4 flex gap-3">
-                <button type="submit" class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95">Save Order</button>
+                <button type="submit" id="saveBtn" class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2">
+                    <span id="saveBtnText">Save Order</span>
+                </button>
                 <button type="button" onclick="toggleModal(false)" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold">Cancel</button>
             </div>
         </form>
@@ -130,7 +143,6 @@
     import { getFirestore, collection, addDoc, updateDoc, deleteDoc, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    // YOUR FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyAGuV3oqPzHKoB0-p9S7oFDpLYHL88c9OE",
       authDomain: "order-tracker-91a03.firebaseapp.com",
@@ -144,32 +156,47 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const appId = "local-customs-manager"; // Unique identifier for your Firestore collection
 
     let orders = [];
     let user = null;
 
+    // Listen for Auth changes
     onAuthStateChanged(auth, u => {
         if (!u) {
-            signInAnonymously(auth).catch(err => console.error("Anonymous Auth Failed", err));
+            signInAnonymously(auth).catch(err => {
+                console.error("Anonymous Auth Failed", err);
+                showFormError("Could not connect to database. Check internet.");
+            });
         } else {
             user = u;
+            console.log("Logged in as", u.uid);
             setupListener();
         }
     });
 
     function setupListener() {
-        const colRef = collection(db, 'orders'); // Simpler path for personal Firebase
+        if (!user) return;
+        const colRef = collection(db, 'orders');
         onSnapshot(colRef, snap => {
             orders = snap.docs.map(d => ({id: d.id, ...d.data()}));
             render();
-        }, err => console.error("Firestore error", err));
+        }, err => {
+            console.error("Firestore error", err);
+        });
+    }
+
+    function showFormError(msg) {
+        const errDiv = document.getElementById('formError');
+        errDiv.innerText = msg;
+        errDiv.classList.remove('hidden');
+        setTimeout(() => errDiv.classList.add('hidden'), 5000);
     }
 
     window.toggleModal = (show, id = null) => {
         const modal = document.getElementById('orderModal');
         const form = document.getElementById('orderForm');
         document.getElementById('orderId').value = id || '';
+        document.getElementById('formError').classList.add('hidden');
         form.reset();
         
         if (id) {
@@ -183,7 +210,10 @@
                 document.getElementById('details').value = o.details;
                 document.getElementById('status').value = o.status;
                 document.getElementById('paymentStatus').value = o.paymentStatus || 'Unpaid';
+                document.getElementById('modalTitle').innerText = "Edit Order";
             }
+        } else {
+            document.getElementById('modalTitle').innerText = "Create Order";
         }
         modal.style.display = show ? 'flex' : 'none';
         lucide.createIcons();
@@ -191,12 +221,32 @@
 
     document.getElementById('orderForm').onsubmit = async (e) => {
         e.preventDefault();
-        if (!user) return;
+        
+        // Ensure user is authenticated before saving
+        if (!user) {
+            showFormError("Wait... connecting to database...");
+            try {
+                const cred = await signInAnonymously(auth);
+                user = cred.user;
+            } catch (err) {
+                showFormError("Database connection failed.");
+                return;
+            }
+        }
+
+        const btn = document.getElementById('saveBtn');
+        const btnText = document.getElementById('saveBtnText');
+        const originalText = btnText.innerText;
+        
+        // Show loading state
+        btn.disabled = true;
+        btnText.innerText = "Saving...";
+
         const id = document.getElementById('orderId').value;
         const payload = {
             customerName: document.getElementById('customerName').value,
             itemType: document.getElementById('itemType').value,
-            quantity: parseInt(document.getElementById('quantity').value),
+            quantity: parseInt(document.getElementById('quantity').value) || 1,
             price: parseFloat(document.getElementById('price').value) || 0,
             depositAmount: parseFloat(document.getElementById('depositAmount').value) || 0,
             paymentStatus: document.getElementById('paymentStatus').value,
@@ -213,20 +263,35 @@
                 await addDoc(collection(db, 'orders'), payload);
             }
             toggleModal(false);
-        } catch (err) { console.error("Save failed", err); }
+        } catch (err) {
+            console.error("Save failed", err);
+            showFormError("Save failed: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btnText.innerText = originalText;
+        }
     };
 
     window.markPaid = async (id) => {
-        await updateDoc(doc(db, 'orders', id), { paymentStatus: 'Full' });
+        if (!user) return;
+        try {
+            await updateDoc(doc(db, 'orders', id), { paymentStatus: 'Full' });
+        } catch (e) { console.error(e); }
     };
 
     window.quickStatus = async (id, next) => {
-        await updateDoc(doc(db, 'orders', id), { status: next });
+        if (!user) return;
+        try {
+            await updateDoc(doc(db, 'orders', id), { status: next });
+        } catch (e) { console.error(e); }
     };
 
     window.deleteOrder = async (id) => {
+        if (!user) return;
         if (confirm('Delete this order?')) {
-            await deleteDoc(doc(db, 'orders', id));
+            try {
+                await deleteDoc(doc(db, 'orders', id));
+            } catch (e) { console.error(e); }
         }
     };
 
@@ -253,7 +318,9 @@
         document.getElementById('stat-items').innerText = items;
 
         const filtered = orders.filter(o => {
-            return o.customerName.toLowerCase().includes(search) && (filter === 'all' || o.status === filter);
+            const nameMatch = (o.customerName || "").toLowerCase().includes(search);
+            const statusMatch = filter === 'all' || o.status === filter;
+            return nameMatch && statusMatch;
         }).sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
 
         if (filtered.length === 0) {
@@ -265,7 +332,7 @@
             const p = o.price || 0, d = o.depositAmount || 0;
             const rem = o.paymentStatus === 'Full' ? 0 : (o.paymentStatus === 'Deposit' ? p - d : p);
             return `
-            <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm transition-all">
+            <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm transition-all hover:border-indigo-100">
                 <div class="flex justify-between items-start mb-4">
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
@@ -293,6 +360,7 @@
                         <p class="font-bold ${rem > 0 ? 'text-rose-600' : 'text-emerald-600'}">${rem > 0 ? `$${rem.toFixed(2)}` : 'PAID'}</p>
                     </div>
                 </div>
+                ${o.details ? `<div class="text-xs text-slate-500 mb-4 px-1 line-clamp-2">${o.details}</div>` : ''}
                 <div class="flex gap-2">
                     ${o.paymentStatus !== 'Full' ? `<button onclick="markPaid('${o.id}')" class="flex-1 py-3 text-xs font-black bg-emerald-600 text-white rounded-xl shadow-md">COLLECT FULL</button>` : ''}
                     ${o.status === 'Pending' ? `<button onclick="quickStatus('${o.id}', 'In Progress')" class="flex-1 py-3 text-xs font-black bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">START</button>` : o.status === 'In Progress' ? `<button onclick="quickStatus('${o.id}', 'Finished')" class="flex-1 py-3 text-xs font-black bg-amber-50 text-amber-700 rounded-xl border border-amber-100">FINISH</button>` : ''}
