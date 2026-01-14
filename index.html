@@ -16,16 +16,6 @@
         .pay-deposit { background-color: #fef3c7; color: #92400e; }
         .pay-full { background-color: #d1fae5; color: #065f46; }
         input, select, button, textarea { font-size: 16px !important; }
-        
-        /* Loading spinner for button */
-        .spinner {
-            animation: rotate 2s linear infinite;
-            width: 18px;
-            height: 18px;
-        }
-        @keyframes rotate {
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-20">
@@ -35,7 +25,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Order Manager</h1>
-            <p class="text-slate-500">Track customs, deposits, & balances.</p>
+            <p class="text-slate-500">Multiple items per customer tracking.</p>
         </div>
         <button onclick="toggleModal(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95">
             <i data-lucide="plus" class="w-6 h-6"></i> New Order
@@ -66,7 +56,7 @@
     <div class="flex flex-col md:flex-row gap-3 mb-6">
         <div class="relative flex-1">
             <i data-lucide="search" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="searchInput" placeholder="Search customer name..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="text" id="searchInput" placeholder="Search customer name..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none outline-none">
         </div>
         <select id="filterStatus" class="bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium outline-none">
             <option value="all">All Statuses</option>
@@ -92,46 +82,57 @@
             <button onclick="toggleModal(false)" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="x"></i></button>
         </div>
         <form id="orderForm" class="p-6 space-y-4">
-            <div id="formError" class="hidden p-3 bg-rose-50 text-rose-600 rounded-xl text-sm font-medium border border-rose-100"></div>
-            
             <input type="hidden" id="orderId">
-            <input type="text" id="customerName" required placeholder="Customer Name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
             
-            <div class="grid grid-cols-2 gap-4">
-                <select id="itemType" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                    <option value="Shirt">Shirt</option>
-                    <option value="Sweater">Sweater</option>
-                    <option value="Crew Neck">Crew Neck</option>
-                    <option value="Sticker">Sticker Set</option>
-                    <option value="Other">Other</option>
-                </select>
-                <input type="number" id="quantity" value="1" min="1" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Customer Name</label>
+                <input type="text" id="customerName" required placeholder="Who is this for?" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <div class="border-t border-slate-100 pt-4">
+                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Order Items</label>
+                <div id="itemsContainer" class="space-y-3">
+                    <!-- Items injected here -->
+                </div>
+                <button type="button" onclick="addItemRow()" class="mt-3 w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:border-indigo-300 hover:text-indigo-400 transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Another Item
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Calculated Total ($)</label>
+                    <input type="number" id="totalPrice" readonly class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl font-bold text-indigo-600 outline-none" value="0.00">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Deposit Paid ($)</label>
+                    <input type="number" id="depositAmount" step="0.01" placeholder="0.00" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" oninput="calculateGrandTotal()">
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <input type="number" id="price" step="0.01" placeholder="Total Price ($)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                <input type="number" id="depositAmount" step="0.01" placeholder="Deposit Paid ($)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Payment Status</label>
+                    <select id="paymentStatus" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                        <option value="Unpaid">Unpaid</option>
+                        <option value="Deposit">Deposit Paid</option>
+                        <option value="Full">Fully Paid</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Work Status</label>
+                    <select id="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Finished">Finished</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <select id="paymentStatus" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                    <option value="Unpaid">Unpaid</option>
-                    <option value="Deposit">Deposit Paid</option>
-                    <option value="Full">Fully Paid</option>
-                </select>
-                <select id="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                    <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Finished">Finished</option>
-                </select>
-            </div>
-
-            <textarea id="details" rows="2" placeholder="Design Notes (sizes, colors...)" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none"></textarea>
+            <textarea id="details" rows="2" placeholder="General design notes..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none"></textarea>
 
             <div class="pt-4 flex gap-3">
-                <button type="submit" id="saveBtn" class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2">
-                    <span id="saveBtnText">Save Order</span>
-                </button>
+                <button type="submit" id="saveBtn" class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-indigo-100 active:scale-95">Save Order</button>
                 <button type="button" onclick="toggleModal(false)" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold">Cancel</button>
             </div>
         </form>
@@ -160,94 +161,108 @@
     let orders = [];
     let user = null;
 
-    // Listen for Auth changes
     onAuthStateChanged(auth, u => {
-        if (!u) {
-            signInAnonymously(auth).catch(err => {
-                console.error("Anonymous Auth Failed", err);
-                showFormError("Could not connect to database. Check internet.");
-            });
-        } else {
-            user = u;
-            console.log("Logged in as", u.uid);
-            setupListener();
-        }
+        if (!u) signInAnonymously(auth);
+        else { user = u; setupListener(); }
     });
 
     function setupListener() {
-        if (!user) return;
-        const colRef = collection(db, 'orders');
-        onSnapshot(colRef, snap => {
+        onSnapshot(collection(db, 'orders'), snap => {
             orders = snap.docs.map(d => ({id: d.id, ...d.data()}));
             render();
-        }, err => {
-            console.error("Firestore error", err);
         });
     }
 
-    function showFormError(msg) {
-        const errDiv = document.getElementById('formError');
-        errDiv.innerText = msg;
-        errDiv.classList.remove('hidden');
-        setTimeout(() => errDiv.classList.add('hidden'), 5000);
-    }
+    // ITEM ROW LOGIC
+    window.addItemRow = (data = {type: 'Shirt', qty: 1, price: 0}) => {
+        const container = document.getElementById('itemsContainer');
+        const rowId = 'row-' + Date.now() + Math.random().toString(36).substr(2, 5);
+        const div = document.createElement('div');
+        div.id = rowId;
+        div.className = "flex items-center gap-2 bg-white p-2 border border-slate-200 rounded-xl shadow-sm";
+        div.innerHTML = `
+            <select class="item-type flex-1 bg-transparent outline-none text-sm font-medium">
+                <option value="Shirt" ${data.type === 'Shirt' ? 'selected' : ''}>Shirt</option>
+                <option value="Sweater" ${data.type === 'Sweater' ? 'selected' : ''}>Sweater</option>
+                <option value="Crew Neck" ${data.type === 'Crew Neck' ? 'selected' : ''}>Crew Neck</option>
+                <option value="Sticker" ${data.type === 'Sticker' ? 'selected' : ''}>Sticker</option>
+                <option value="Other" ${data.type === 'Other' ? 'selected' : ''}>Other</option>
+            </select>
+            <div class="flex items-center gap-1 w-20">
+                <span class="text-[10px] font-bold text-slate-300">x</span>
+                <input type="number" class="item-qty w-full bg-transparent outline-none font-bold text-slate-700" value="${data.qty}" oninput="calculateGrandTotal()">
+            </div>
+            <div class="flex items-center gap-1 w-24">
+                <span class="text-[10px] font-bold text-slate-300">$</span>
+                <input type="number" step="0.01" class="item-price w-full bg-transparent outline-none font-bold text-slate-700" value="${data.price}" oninput="calculateGrandTotal()">
+            </div>
+            <button type="button" onclick="document.getElementById('${rowId}').remove(); calculateGrandTotal();" class="p-1 text-slate-300 hover:text-rose-500">
+                <i data-lucide="minus-circle" class="w-5 h-5"></i>
+            </button>
+        `;
+        container.appendChild(div);
+        lucide.createIcons();
+        calculateGrandTotal();
+    };
+
+    window.calculateGrandTotal = () => {
+        let total = 0;
+        const rows = document.querySelectorAll('#itemsContainer > div');
+        rows.forEach(row => {
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            total += (qty * price);
+        });
+        document.getElementById('totalPrice').value = total.toFixed(2);
+    };
 
     window.toggleModal = (show, id = null) => {
         const modal = document.getElementById('orderModal');
         const form = document.getElementById('orderForm');
+        const itemsContainer = document.getElementById('itemsContainer');
+        itemsContainer.innerHTML = '';
         document.getElementById('orderId').value = id || '';
-        document.getElementById('formError').classList.add('hidden');
         form.reset();
         
         if (id) {
             const o = orders.find(x => x.id === id);
             if (o) {
                 document.getElementById('customerName').value = o.customerName;
-                document.getElementById('itemType').value = o.itemType;
-                document.getElementById('quantity').value = o.quantity;
-                document.getElementById('price').value = o.price || 0;
                 document.getElementById('depositAmount').value = o.depositAmount || 0;
                 document.getElementById('details').value = o.details;
                 document.getElementById('status').value = o.status;
                 document.getElementById('paymentStatus').value = o.paymentStatus || 'Unpaid';
-                document.getElementById('modalTitle').innerText = "Edit Order";
+                if (o.items && o.items.length > 0) {
+                    o.items.forEach(item => addItemRow(item));
+                } else {
+                    addItemRow();
+                }
             }
         } else {
-            document.getElementById('modalTitle').innerText = "Create Order";
+            addItemRow();
         }
         modal.style.display = show ? 'flex' : 'none';
-        lucide.createIcons();
+        calculateGrandTotal();
     };
 
     document.getElementById('orderForm').onsubmit = async (e) => {
         e.preventDefault();
-        
-        // Ensure user is authenticated before saving
-        if (!user) {
-            showFormError("Wait... connecting to database...");
-            try {
-                const cred = await signInAnonymously(auth);
-                user = cred.user;
-            } catch (err) {
-                showFormError("Database connection failed.");
-                return;
-            }
-        }
-
-        const btn = document.getElementById('saveBtn');
-        const btnText = document.getElementById('saveBtnText');
-        const originalText = btnText.innerText;
-        
-        // Show loading state
-        btn.disabled = true;
-        btnText.innerText = "Saving...";
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Saving...";
 
         const id = document.getElementById('orderId').value;
+        const itemRows = document.querySelectorAll('#itemsContainer > div');
+        const itemsList = Array.from(itemRows).map(row => ({
+            type: row.querySelector('.item-type').value,
+            qty: parseInt(row.querySelector('.item-qty').value) || 0,
+            price: parseFloat(row.querySelector('.item-price').value) || 0
+        }));
+
         const payload = {
             customerName: document.getElementById('customerName').value,
-            itemType: document.getElementById('itemType').value,
-            quantity: parseInt(document.getElementById('quantity').value) || 1,
-            price: parseFloat(document.getElementById('price').value) || 0,
+            items: itemsList,
+            totalPrice: parseFloat(document.getElementById('totalPrice').value),
             depositAmount: parseFloat(document.getElementById('depositAmount').value) || 0,
             paymentStatus: document.getElementById('paymentStatus').value,
             details: document.getElementById('details').value,
@@ -256,43 +271,23 @@
         };
 
         try {
-            if (id) {
-                await updateDoc(doc(db, 'orders', id), payload);
-            } else {
-                payload.createdAt = Date.now();
-                await addDoc(collection(db, 'orders'), payload);
-            }
+            if (id) await updateDoc(doc(db, 'orders', id), payload);
+            else { payload.createdAt = Date.now(); await addDoc(collection(db, 'orders'), payload); }
             toggleModal(false);
-        } catch (err) {
-            console.error("Save failed", err);
-            showFormError("Save failed: " + err.message);
-        } finally {
-            btn.disabled = false;
-            btnText.innerText = originalText;
-        }
+        } catch (err) { alert("Error saving: " + err.message); }
+        finally { saveBtn.disabled = false; saveBtn.innerText = "Save Order"; }
     };
 
     window.markPaid = async (id) => {
-        if (!user) return;
-        try {
-            await updateDoc(doc(db, 'orders', id), { paymentStatus: 'Full' });
-        } catch (e) { console.error(e); }
+        await updateDoc(doc(db, 'orders', id), { paymentStatus: 'Full' });
     };
 
     window.quickStatus = async (id, next) => {
-        if (!user) return;
-        try {
-            await updateDoc(doc(db, 'orders', id), { status: next });
-        } catch (e) { console.error(e); }
+        await updateDoc(doc(db, 'orders', id), { status: next });
     };
 
     window.deleteOrder = async (id) => {
-        if (!user) return;
-        if (confirm('Delete this order?')) {
-            try {
-                await deleteDoc(doc(db, 'orders', id));
-            } catch (e) { console.error(e); }
-        }
+        if (confirm('Delete entire order?')) await deleteDoc(doc(db, 'orders', id));
     };
 
     function render() {
@@ -300,28 +295,26 @@
         const search = document.getElementById('searchInput').value.toLowerCase();
         const filter = document.getElementById('filterStatus').value;
 
-        let inHand = 0, outstanding = 0, active = 0, items = 0;
+        let inHand = 0, outstanding = 0, activeCount = 0, totalItemsCount = 0;
 
         orders.forEach(o => {
-            const p = o.price || 0, d = o.depositAmount || 0;
+            const p = o.totalPrice || 0, d = o.depositAmount || 0;
             if (o.paymentStatus === 'Full') inHand += p;
             else if (o.paymentStatus === 'Deposit') { inHand += d; outstanding += (p - d); }
             else outstanding += p;
 
-            if (o.status !== 'Finished') active++;
-            items += (o.quantity || 0);
+            if (o.status !== 'Finished') activeCount++;
+            (o.items || []).forEach(i => totalItemsCount += i.qty);
         });
 
         document.getElementById('stat-revenue').innerText = `$${inHand.toFixed(2)}`;
         document.getElementById('stat-pending-cash').innerText = `$${outstanding.toFixed(2)}`;
-        document.getElementById('stat-active').innerText = active;
-        document.getElementById('stat-items').innerText = items;
+        document.getElementById('stat-active').innerText = activeCount;
+        document.getElementById('stat-items').innerText = totalItemsCount;
 
-        const filtered = orders.filter(o => {
-            const nameMatch = (o.customerName || "").toLowerCase().includes(search);
-            const statusMatch = filter === 'all' || o.status === filter;
-            return nameMatch && statusMatch;
-        }).sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+        const filtered = orders.filter(o => 
+            (o.customerName || "").toLowerCase().includes(search) && (filter === 'all' || o.status === filter)
+        ).sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
 
         if (filtered.length === 0) {
             list.innerHTML = `<div class="bg-white p-12 text-center rounded-3xl text-slate-400 border-2 border-dashed border-slate-200">No orders found.</div>`;
@@ -329,41 +322,45 @@
         }
 
         list.innerHTML = filtered.map(o => {
-            const p = o.price || 0, d = o.depositAmount || 0;
+            const p = o.totalPrice || 0, d = o.depositAmount || 0;
             const rem = o.paymentStatus === 'Full' ? 0 : (o.paymentStatus === 'Deposit' ? p - d : p);
+            const itemsSummary = (o.items || []).map(i => `${i.qty}x ${i.type}`).join(', ');
+
             return `
             <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm transition-all hover:border-indigo-100">
-                <div class="flex justify-between items-start mb-4">
+                <div class="flex justify-between items-start mb-2">
                     <div class="space-y-1">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <h3 class="font-bold text-slate-900 text-lg">${o.customerName}</h3>
                             <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${getStatusColor(o.status)}">${o.status}</span>
                         </div>
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="font-semibold text-indigo-600">${o.quantity}x ${o.itemType}</span>
-                            <span class="text-slate-300">•</span>
-                            <span class="px-2 py-0.5 rounded-md font-bold text-[11px] ${getPaymentClass(o.paymentStatus)}">${o.paymentStatus.toUpperCase()}</span>
-                        </div>
+                        <p class="text-xs font-medium text-indigo-600 line-clamp-1">${itemsSummary}</p>
                     </div>
                     <div class="flex gap-1">
-                        <button onclick="toggleModal(true, '${o.id}')" class="p-2 text-slate-400 hover:text-indigo-600 rounded-xl"><i data-lucide="edit-2"></i></button>
-                        <button onclick="deleteOrder('${o.id}')" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl"><i data-lucide="trash-2"></i></button>
+                        <button onclick="toggleModal(true, '${o.id}')" class="p-2 text-slate-400 hover:text-indigo-600 rounded-xl transition-colors"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+                        <button onclick="deleteOrder('${o.id}')" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl transition-colors"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                     </div>
                 </div>
+
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-slate-50 p-2 rounded-xl text-center">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">Total</p>
+                    <div class="bg-slate-50 p-2 rounded-xl text-center border border-slate-100">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Total Bill</p>
                         <p class="font-bold text-slate-700">$${p.toFixed(2)}</p>
                     </div>
-                    <div class="bg-slate-50 p-2 rounded-xl text-center">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase">Balance</p>
-                        <p class="font-bold ${rem > 0 ? 'text-rose-600' : 'text-emerald-600'}">${rem > 0 ? `$${rem.toFixed(2)}` : 'PAID'}</p>
+                    <div class="bg-slate-50 p-2 rounded-xl text-center border border-slate-100">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Remaining</p>
+                        <p class="font-bold ${rem > 0 ? 'text-rose-600' : 'text-emerald-600'}">${rem > 0 ? `$${rem.toFixed(2)}` : 'SETTLED'}</p>
                     </div>
                 </div>
-                ${o.details ? `<div class="text-xs text-slate-500 mb-4 px-1 line-clamp-2">${o.details}</div>` : ''}
+
+                <div class="flex items-center justify-between mb-4 px-1">
+                    <span class="px-2 py-0.5 rounded-md font-bold text-[10px] ${getPaymentClass(o.paymentStatus)}">${o.paymentStatus.toUpperCase()}</span>
+                    <span class="text-[10px] text-slate-400 font-medium">${new Date(o.createdAt).toLocaleDateString()}</span>
+                </div>
+
                 <div class="flex gap-2">
-                    ${o.paymentStatus !== 'Full' ? `<button onclick="markPaid('${o.id}')" class="flex-1 py-3 text-xs font-black bg-emerald-600 text-white rounded-xl shadow-md">COLLECT FULL</button>` : ''}
-                    ${o.status === 'Pending' ? `<button onclick="quickStatus('${o.id}', 'In Progress')" class="flex-1 py-3 text-xs font-black bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100">START</button>` : o.status === 'In Progress' ? `<button onclick="quickStatus('${o.id}', 'Finished')" class="flex-1 py-3 text-xs font-black bg-amber-50 text-amber-700 rounded-xl border border-amber-100">FINISH</button>` : ''}
+                    ${o.paymentStatus !== 'Full' ? `<button onclick="markPaid('${o.id}')" class="flex-1 py-3 text-xs font-black bg-emerald-600 text-white rounded-xl shadow-md active:scale-95 transition-all">COLLECT BAL.</button>` : ''}
+                    ${o.status === 'Pending' ? `<button onclick="quickStatus('${o.id}', 'In Progress')" class="flex-1 py-3 text-xs font-black bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 active:scale-95 transition-all">START</button>` : o.status === 'In Progress' ? `<button onclick="quickStatus('${o.id}', 'Finished')" class="flex-1 py-3 text-xs font-black bg-amber-50 text-amber-700 rounded-xl border border-amber-100 active:scale-95 transition-all">FINISH</button>` : ''}
                 </div>
             </div>`;
         }).join('');
