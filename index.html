@@ -31,7 +31,7 @@
         <div class="flex gap-2">
             <button onclick="toggleLibrary(true)" class="bg-white border border-slate-200 text-slate-700 p-4 rounded-2xl font-bold flex items-center gap-2 shadow-sm active:scale-95 transition-all">
                 <i data-lucide="image" class="w-6 h-6"></i>
-                <span class="hidden md:inline">Designs</span>
+                <span class="hidden md:inline">Library</span>
             </button>
             <button onclick="toggleModal(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-2xl font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all">
                 <i data-lucide="plus" class="w-6 h-6"></i>
@@ -64,7 +64,7 @@
     <div class="flex flex-col md:flex-row gap-3 mb-6">
         <div class="relative flex-1">
             <i data-lucide="search" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            <input type="text" id="searchInput" placeholder="Search customer name..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none shadow-sm">
+            <input type="text" id="searchInput" placeholder="Search customer..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none shadow-sm">
         </div>
         <select id="filterStatus" class="bg-white border border-slate-200 rounded-xl px-4 py-3 font-medium outline-none shadow-sm">
             <option value="all">Show All</option>
@@ -85,49 +85,48 @@
 <div id="orderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
     <div class="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl my-auto">
         <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h2 id="modalTitle" class="text-xl font-bold text-slate-800">Create Order</h2>
+            <h2 class="text-xl font-bold text-slate-800">Order Details</h2>
             <button onclick="toggleModal(false)" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="x"></i></button>
         </div>
         <form id="orderForm" class="p-6 space-y-4">
             <input type="hidden" id="orderId">
-            
             <input type="text" id="customerName" required placeholder="Customer Name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
 
             <!-- Attached Designs -->
             <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Attached Designs</label>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-wider">Order Designs</label>
                 <div id="attachedDesigns" class="flex flex-wrap gap-2 mb-2"></div>
-                <button type="button" onclick="openDesignSelector()" class="w-full py-3 bg-indigo-50 text-indigo-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-indigo-100">
-                    <i data-lucide="image-plus" class="w-4 h-4"></i> Add Design to Order
+                <button type="button" onclick="openDesignSelector()" class="w-full py-3 bg-indigo-50 text-indigo-600 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-indigo-100 active:bg-indigo-100">
+                    <i data-lucide="image-plus" class="w-4 h-4"></i> Attach Design
                 </button>
             </div>
 
             <div class="border-t border-slate-100 pt-4">
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Items</label>
+                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 tracking-wider">Items</label>
                 <div id="itemsContainer" class="space-y-3"></div>
-                <button type="button" onclick="addItemRow()" class="mt-3 w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:border-indigo-300 transition-colors flex items-center justify-center gap-2">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Another Item
+                <button type="button" onclick="addItemRow()" class="mt-3 w-full py-2 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-bold hover:border-indigo-300 flex items-center justify-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Item
                 </button>
             </div>
 
             <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Total ($)</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-wider">Total ($)</label>
                     <input type="number" id="totalPrice" readonly class="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl font-bold text-indigo-600">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Deposit ($)</label>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-1 tracking-wider">Deposit ($)</label>
                     <input type="number" id="depositAmount" step="0.01" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" oninput="calculateGrandTotal()">
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <select id="paymentStatus" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <select id="paymentStatus" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium">
                     <option value="Unpaid">Unpaid</option>
                     <option value="Deposit">Deposit Paid</option>
                     <option value="Full">Fully Paid</option>
                 </select>
-                <select id="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                <select id="status" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-medium">
                     <option value="Pending">Pending</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Finished">Finished</option>
@@ -137,7 +136,7 @@
             <textarea id="details" rows="2" placeholder="Notes..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none"></textarea>
 
             <div class="pt-4 flex gap-3">
-                <button type="submit" id="saveBtn" class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg active:scale-95">Save Order</button>
+                <button type="submit" class="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg active:scale-95">Save Order</button>
                 <button type="button" onclick="toggleModal(false)" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold">Cancel</button>
             </div>
         </form>
@@ -146,30 +145,27 @@
 
 <!-- Design Library Modal -->
 <div id="libraryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[60] overflow-y-auto">
-    <div class="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl h-[80vh] flex flex-col">
+    <div class="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl h-[85vh] flex flex-col my-auto">
         <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h2 class="text-xl font-bold text-slate-800">Design Library</h2>
+            <h2 class="text-xl font-bold text-slate-800">Designs</h2>
             <button onclick="toggleLibrary(false)" class="p-2 hover:bg-slate-100 rounded-full"><i data-lucide="x"></i></button>
         </div>
         
         <div class="p-6 border-b border-slate-100 bg-slate-50">
-            <div class="flex gap-2">
-                <input type="text" id="newDesignName" placeholder="Design Name (e.g. Logo Red)" class="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl outline-none">
-                <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleFileUpload(this)">
-                <button onclick="document.getElementById('imageInput').click()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 active:scale-95">
-                    <i data-lucide="upload" class="w-4 h-4"></i> Upload
-                </button>
-            </div>
-            <div id="uploadStatus" class="hidden text-xs text-indigo-600 mt-2 font-bold">Uploading...</div>
+            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleFileUpload(this)">
+            <button onclick="document.getElementById('imageInput').click()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 shadow-md">
+                <i data-lucide="camera" class="w-5 h-5"></i> Add New Image
+            </button>
+            <div id="uploadStatus" class="hidden text-center text-xs text-indigo-600 mt-3 font-bold animate-pulse">Compressing & Uploading...</div>
         </div>
 
-        <div id="libraryGrid" class="flex-1 overflow-y-auto p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div id="libraryGrid" class="flex-1 overflow-y-auto p-4 grid grid-cols-3 gap-3">
             <!-- Library items here -->
         </div>
 
-        <div id="selectorFooter" class="hidden p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+        <div id="selectorFooter" class="hidden p-6 border-t border-slate-100 bg-white flex justify-end gap-3">
             <button onclick="toggleLibrary(false)" class="px-6 py-3 text-slate-500 font-bold">Cancel</button>
-            <button onclick="confirmDesignSelection()" class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold">Add Selected</button>
+            <button onclick="confirmDesignSelection()" class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg">Confirm Selection</button>
         </div>
     </div>
 </div>
@@ -195,13 +191,13 @@
 
     let orders = [];
     let library = [];
-    let user = null;
     let selectedDesignsInForm = [];
     let selectingForOrder = false;
+    let tempSelections = [];
 
     onAuthStateChanged(auth, u => {
         if (!u) signInAnonymously(auth);
-        else { user = u; setupListeners(); }
+        else setupListeners();
     });
 
     function setupListeners() {
@@ -210,63 +206,73 @@
             render();
         });
         onSnapshot(collection(db, 'library'), snap => {
-            library = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            library = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.createdAt - a.createdAt);
             renderLibrary();
         });
     }
 
-    // IMAGE UPLOAD HELPER
+    // IMAGE COMPRESSION & UPLOAD
     window.handleFileUpload = (input) => {
         const file = input.files[0];
-        const nameInput = document.getElementById('newDesignName');
-        if (!file || !nameInput.value) {
-            alert("Please enter a design name first.");
-            return;
-        }
+        if (!file) return;
 
         const status = document.getElementById('uploadStatus');
         status.classList.remove('hidden');
 
         const reader = new FileReader();
-        reader.onload = async (e) => {
-            const base64 = e.target.result;
-            try {
-                await addDoc(collection(db, 'library'), {
-                    name: nameInput.value,
-                    imageData: base64,
-                    createdAt: Date.now()
-                });
-                nameInput.value = '';
-                input.value = '';
-            } catch (err) { alert(err.message); }
-            finally { status.classList.add('hidden'); }
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 800; // Shrink for database storage
+                const scale = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scale;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Low quality (0.6) to ensure it stays under 1MB limit
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                
+                saveToLibrary(compressedBase64);
+            };
+            img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+        input.value = '';
     };
+
+    async function saveToLibrary(base64) {
+        try {
+            await addDoc(collection(db, 'library'), {
+                imageData: base64,
+                createdAt: Date.now()
+            });
+        } catch (err) {
+            alert("Database full or permission error. Try a smaller photo.");
+        } finally {
+            document.getElementById('uploadStatus').classList.add('hidden');
+        }
+    }
 
     window.deleteDesign = async (e, id) => {
         e.stopPropagation();
-        if (confirm('Delete this design from library?')) {
-            await deleteDoc(doc(db, 'library', id));
-        }
+        if (confirm('Delete image?')) await deleteDoc(doc(db, 'library', id));
     };
 
-    // LIBRARY MODAL
     window.toggleLibrary = (show, selectionMode = false) => {
         selectingForOrder = selectionMode;
         const modal = document.getElementById('libraryModal');
         const footer = document.getElementById('selectorFooter');
         footer.classList.toggle('hidden', !selectionMode);
         modal.style.display = show ? 'flex' : 'none';
-        
         if (show) {
-            // Reset temp selections to what's already in form
             tempSelections = [...selectedDesignsInForm];
             renderLibrary();
         }
     };
 
-    let tempSelections = [];
     window.toggleDesignSelection = (id) => {
         if (!selectingForOrder) return;
         const idx = tempSelections.indexOf(id);
@@ -281,9 +287,7 @@
         toggleLibrary(false);
     };
 
-    window.openDesignSelector = () => {
-        toggleLibrary(true, true);
-    };
+    window.openDesignSelector = () => toggleLibrary(true, true);
 
     function renderAttachedInForm() {
         const container = document.getElementById('attachedDesigns');
@@ -291,9 +295,9 @@
             const d = library.find(x => x.id === id);
             if (!d) return '';
             return `
-                <div class="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-indigo-200">
+                <div class="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-indigo-200">
                     <img src="${d.imageData}" class="w-full h-full object-cover">
-                    <button type="button" onclick="removeDesignFromForm('${id}')" class="absolute top-0 right-0 bg-rose-500 text-white p-0.5 rounded-bl-lg">
+                    <button type="button" onclick="removeDesignFromForm('${id}')" class="absolute top-0 right-0 bg-rose-500 text-white p-1 rounded-bl-lg">
                         <i data-lucide="x" class="w-3 h-3"></i>
                     </button>
                 </div>
@@ -310,24 +314,21 @@
     function renderLibrary() {
         const grid = document.getElementById('libraryGrid');
         if (library.length === 0) {
-            grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">No designs yet.</div>`;
+            grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400 font-medium">No images uploaded yet.</div>`;
             return;
         }
         grid.innerHTML = library.map(d => {
             const isSelected = selectingForOrder && tempSelections.includes(d.id);
             return `
-                <div onclick="toggleDesignSelection('${d.id}')" class="design-card relative group bg-white border-2 rounded-2xl overflow-hidden cursor-pointer transition-all ${isSelected ? 'border-indigo-600 scale-95 ring-4 ring-indigo-50' : 'border-slate-100 hover:border-slate-300'}">
-                    <img src="${d.imageData}" class="w-full aspect-square object-cover">
-                    <div class="p-2 bg-white">
-                        <p class="text-[10px] font-bold truncate text-slate-600">${d.name}</p>
-                    </div>
-                    ${selectingForOrder && isSelected ? `
+                <div onclick="toggleDesignSelection('${d.id}')" class="relative group aspect-square rounded-2xl overflow-hidden cursor-pointer border-4 transition-all ${isSelected ? 'border-indigo-600 scale-95 ring-4 ring-indigo-100' : 'border-transparent'}">
+                    <img src="${d.imageData}" class="w-full h-full object-cover">
+                    ${isSelected ? `
                         <div class="absolute inset-0 bg-indigo-600/20 flex items-center justify-center">
-                            <div class="bg-indigo-600 text-white rounded-full p-1"><i data-lucide="check" class="w-4 h-4"></i></div>
+                            <div class="bg-indigo-600 text-white rounded-full p-1.5 shadow-lg"><i data-lucide="check" class="w-5 h-5"></i></div>
                         </div>
                     ` : ''}
-                    <button onclick="deleteDesign(event, '${d.id}')" class="absolute top-1 right-1 bg-white/90 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity text-rose-500">
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <button onclick="deleteDesign(event, '${d.id}')" class="absolute top-2 right-2 bg-white/90 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity text-rose-500 shadow-sm">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </div>
             `;
@@ -335,24 +336,22 @@
         lucide.createIcons();
     }
 
-    // ORDER MODAL & FORM 
+    // ORDER LOGIC
     window.addItemRow = (data = {type: 'Shirt', qty: 1, price: 0}) => {
         const container = document.getElementById('itemsContainer');
-        const rowId = 'row-' + Date.now() + Math.random().toString(36).substr(2, 5);
+        const rowId = 'row-' + Math.random().toString(36).substr(2, 9);
         const div = document.createElement('div');
         div.id = rowId;
         div.className = "flex items-center gap-2 bg-white p-2 border border-slate-200 rounded-xl shadow-sm";
         div.innerHTML = `
-            <select class="item-type flex-1 bg-transparent outline-none text-sm font-medium">
+            <select class="item-type flex-1 bg-transparent outline-none text-sm font-bold text-slate-700">
                 <option value="Shirt" ${data.type === 'Shirt' ? 'selected' : ''}>Shirt</option>
                 <option value="Sweater" ${data.type === 'Sweater' ? 'selected' : ''}>Sweater</option>
-                <option value="Crew Neck" ${data.type === 'Crew Neck' ? 'selected' : ''}>Crew Neck</option>
+                <option value="Crew Neck" ${data.type === 'Crew Neck' ? 'selected' : ''}>Crew</option>
                 <option value="Sticker" ${data.type === 'Sticker' ? 'selected' : ''}>Sticker</option>
                 <option value="Other" ${data.type === 'Other' ? 'selected' : ''}>Other</option>
             </select>
-            <div class="flex items-center gap-1 w-16">
-                <input type="number" class="item-qty w-full bg-transparent outline-none font-bold text-slate-700 text-center" value="${data.qty}" oninput="calculateGrandTotal()">
-            </div>
+            <input type="number" class="item-qty w-12 bg-transparent outline-none font-black text-indigo-600 text-center" value="${data.qty}" oninput="calculateGrandTotal()">
             <div class="flex items-center gap-1 w-20">
                 <span class="text-[10px] font-bold text-slate-300">$</span>
                 <input type="number" step="0.01" class="item-price w-full bg-transparent outline-none font-bold text-slate-700" value="${data.price}" oninput="calculateGrandTotal()">
@@ -421,7 +420,7 @@
             if (id) await updateDoc(doc(db, 'orders', id), payload);
             else await addDoc(collection(db, 'orders'), payload);
             toggleModal(false);
-        } catch (err) { alert(err.message); }
+        } catch (err) { alert("Save error."); }
     };
 
     window.markPaid = async (id) => await updateDoc(doc(db, 'orders', id), { paymentStatus: 'Full' });
@@ -460,7 +459,7 @@
         });
 
         if (filtered.length === 0) {
-            list.innerHTML = `<div class="bg-white p-12 text-center rounded-3xl text-slate-400 border-2 border-dashed border-slate-200">No orders.</div>`;
+            list.innerHTML = `<div class="bg-white p-12 text-center rounded-3xl text-slate-400 border-2 border-dashed border-slate-200">No matching orders.</div>`;
             return;
         }
 
@@ -470,12 +469,12 @@
             const itemsSummary = (o.items || []).map(i => `${i.qty}x ${i.type}`).join(', ');
             const designPreviews = (o.designIds || []).map(id => {
                 const libItem = library.find(x => x.id === id);
-                return libItem ? `<img src="${libItem.imageData}" class="w-8 h-8 rounded-md border border-white shadow-sm -ml-2 first:ml-0 object-cover">` : '';
+                return libItem ? `<img src="${libItem.imageData}" class="w-10 h-10 rounded-xl border-2 border-white shadow-sm -ml-3 first:ml-0 object-cover bg-white">` : '';
             }).join('');
 
             return `
             <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm transition-all ${o.status === 'Finished' ? 'opacity-60 grayscale' : 'hover:border-indigo-100'}">
-                <div class="flex justify-between items-start mb-3">
+                <div class="flex justify-between items-start mb-4">
                     <div class="space-y-1">
                         <div class="flex items-center gap-2 flex-wrap">
                             <h3 class="font-bold text-slate-900 text-lg">${o.customerName}</h3>
@@ -485,33 +484,27 @@
                     </div>
                     <div class="flex gap-1">
                         <button onclick="toggleModal(true, '${o.id}')" class="p-2 text-slate-400 hover:text-indigo-600 rounded-xl"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
-                        <button onclick="deleteOrder('${o.id}')" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="flex items-center min-w-[60px]">${designPreviews || '<span class="text-[10px] text-slate-300 italic">No design</span>'}</div>
-                    <div class="h-8 w-px bg-slate-100"></div>
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="flex items-center min-w-[40px] pl-3">${designPreviews || '<span class="text-[10px] text-slate-300 italic">No Design</span>'}</div>
+                    <div class="h-10 w-px bg-slate-100"></div>
                     <div class="flex-1 grid grid-cols-2 gap-2">
                         <div class="text-center">
-                            <p class="text-[8px] font-bold text-slate-400 uppercase">Total</p>
-                            <p class="font-bold text-slate-700 text-sm">$${p.toFixed(2)}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Total</p>
+                            <p class="font-black text-slate-800 text-sm">$${p.toFixed(0)}</p>
                         </div>
                         <div class="text-center">
-                            <p class="text-[8px] font-bold text-slate-400 uppercase">Bal.</p>
-                            <p class="font-bold text-sm ${rem > 0 ? 'text-rose-600' : 'text-emerald-600'}">${rem > 0 ? `$${rem.toFixed(2)}` : 'PAID'}</p>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Owed</p>
+                            <p class="font-black text-sm ${rem > 0 ? 'text-rose-600' : 'text-emerald-600'}">${rem > 0 ? `$${rem.toFixed(0)}` : 'PAID'}</p>
                         </div>
                     </div>
-                </div>
-
-                <div class="flex items-center justify-between mb-4 px-1">
-                    <span class="px-2 py-0.5 rounded-md font-bold text-[9px] ${getPaymentClass(o.paymentStatus)}">${o.paymentStatus.toUpperCase()}</span>
-                    <span class="text-[9px] text-slate-400 font-medium">Added ${new Date(o.createdAt).toLocaleDateString()}</span>
                 </div>
 
                 <div class="flex gap-2">
-                    ${o.paymentStatus !== 'Full' ? `<button onclick="markPaid('${o.id}')" class="flex-1 py-3 text-xs font-black bg-emerald-600 text-white rounded-xl shadow-md active:scale-95 transition-all">PAID</button>` : ''}
-                    ${o.status === 'Pending' ? `<button onclick="quickStatus('${o.id}', 'In Progress')" class="flex-1 py-3 text-xs font-black bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 active:scale-95 transition-all">START</button>` : o.status === 'In Progress' ? `<button onclick="quickStatus('${o.id}', 'Finished')" class="flex-1 py-3 text-xs font-black bg-amber-50 text-amber-700 rounded-xl border border-amber-100 active:scale-95 transition-all">FINISH</button>` : ''}
+                    ${o.paymentStatus !== 'Full' ? `<button onclick="markPaid('${o.id}')" class="flex-1 py-3 text-xs font-black bg-emerald-600 text-white rounded-xl shadow-md active:scale-95 transition-all">COLLECT $${rem.toFixed(0)}</button>` : ''}
+                    ${o.status === 'Pending' ? `<button onclick="quickStatus('${o.id}', 'In Progress')" class="flex-1 py-3 text-xs font-black bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 active:scale-95 transition-all uppercase">Start Job</button>` : o.status === 'In Progress' ? `<button onclick="quickStatus('${o.id}', 'Finished')" class="flex-1 py-3 text-xs font-black bg-amber-50 text-amber-700 rounded-xl border border-amber-100 active:scale-95 transition-all uppercase">Complete</button>` : ''}
                 </div>
             </div>`;
         }).join('');
